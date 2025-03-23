@@ -16,6 +16,7 @@ type ChatGPT struct {
 	APIKey string
 }
 
+
 type Request struct {
 	Model    string    `json:"model"`
 	Messages []Message `json:"messages"`
