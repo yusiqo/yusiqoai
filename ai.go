@@ -1,10 +1,12 @@
 package yusiqoai
 
+
 import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"fmt"
+	"io"
 	"net/http"
 )
 
@@ -15,7 +17,7 @@ type ChatGPT struct {
 }
 
 type Request struct {
-	Model    string  `json:"model"`
+	Model    string    `json:"model"`
 	Messages []Message `json:"messages"`
 }
 
@@ -28,6 +30,9 @@ type Response struct {
 	Choices []struct {
 		Message Message `json:"message"`
 	} `json:"choices"`
+	Error struct {
+		Message string `json:"message"`
+	} `json:"error"`
 }
 
 func (c *ChatGPT) SendMessage(prompt string) (string, error) {
@@ -50,11 +55,22 @@ func (c *ChatGPT) SendMessage(prompt string) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
-		return "", errors.New("ChatGPT API hatası")
+	body, readErr := io.ReadAll(resp.Body)
+	if readErr != nil {
+		return "", readErr
 	}
 
-	body, _ := ioutil.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		// Hata mesajını API'den al ve göster
+		var apiError Response
+		json.Unmarshal(body, &apiError)
+
+		if apiError.Error.Message != "" {
+			return "", errors.New(fmt.Sprintf("ChatGPT API hatası: %s", apiError.Error.Message))
+		}
+
+		return "", errors.New(fmt.Sprintf("ChatGPT API hatası: HTTP %d - %s", resp.StatusCode, string(body)))
+	}
 
 	var response Response
 	json.Unmarshal(body, &response)
