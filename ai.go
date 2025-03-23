@@ -38,7 +38,7 @@ type Response struct {
 
 func (c *ChatGPT) SendMessage(prompt string) (string, error) {
 	reqBody, _ := json.Marshal(Request{
-		Model: "gpt-3.5-turbo",
+		Model: "openai",
 		Messages: []Message{
 			{Role: "system", Content: "Sen bir yardımcı AI'sın."},
 			{Role: "user", Content: prompt},
